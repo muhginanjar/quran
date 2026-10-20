@@ -181,24 +181,35 @@ function tplMushaf(p) {
   p = Math.min(Math.max(1, p | 0), 604);
   const g0 = PAGE_START[p], g1 = PAGE_START[p + 1] - 1;
   const juz = Q.jz[g0 - 1];
+  const M = window.MUSHAF604;
   let body = '';
-  for (let g = g0; g <= g1; g++) {
-    const { s, v } = $ref(g);
-    if (v === 1) {
-      const b = s !== 1 && s !== 9 ? `<span class="mbasm">بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ</span>` : '';
-      body += `<span class="msurah" title="${esc($surah(s).l)}">${b}<span class="msname">سُورَةُ ${esc($surah(s).a)}</span></span>`;
+  if (M && M.p[p - 1]) {                       // baris persis seperti cetak (Madinah 15 baris)
+    for (const ln of M.p[p - 1]) {
+      if (ln[0] === 1) body += `<div class="mline h">سُورَةُ ${esc($surah(ln[1]).a)}</div>`;
+      else if (ln[0] === 2) body += `<div class="mline b">بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ</div>`;
+      else body += `<div class="mline${ln[2] ? ' c' : ''}">${esc(ln[1]).replace(/[٠-٩]{1,4}/g, m => `<span class="mnum">${m}</span>`)}</div>`;
     }
-    body += `${esc($text(g)[0])} <span class="mnum">${arNum(v)}</span> `;
+    body = `<div class="mlines">${body}</div>`;
+  } else {                                     // fallback: teks mengalir per ayat
+    for (let g = g0; g <= g1; g++) {
+      const { s, v } = $ref(g);
+      if (v === 1) {
+        const b = s !== 1 && s !== 9 ? `<span class="mbasm">بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ</span>` : '';
+        body += `<span class="msurah" title="${esc($surah(s).l)}">${b}<span class="msname">سُورَةُ ${esc($surah(s).a)}</span></span>`;
+      }
+      body += `${esc($text(g)[0])} <span class="mnum">${arNum(v)}</span> `;
+    }
+    body = `<div class="mtext" dir="rtl">${body}</div>`;
   }
   return `
   <div class="mbar">
     <button id="m-prev" title="Halaman sebelumnya">‹</button>
-    <div class="mtitle"><b>Mushaf</b><span>Halaman ${p} dari 604 · Juz ${juz}</span></div>
+    <div class="mtitle"><b>Mushaf</b><span>Halaman ${p} dari 604 · Juz ${juz} · 15 baris</span></div>
     <input id="m-jump" type="number" min="1" max="604" value="${p}" aria-label="Ke halaman">
     <button id="m-next" title="Halaman berikutnya">›</button>
   </div>
   <div class="mpage ${turnDir > 0 ? 'turn-l' : 'turn-r'}" id="mpage">
-    <div class="mtext" dir="rtl">${body}</div>
+    ${body}
     <div class="mfoot">${arNum(p)}</div>
   </div>
   <p class="sub" style="text-align:center;margin-top:10px">Geser ke kiri / kanan untuk membalik halaman</p>`;
@@ -353,6 +364,8 @@ function tplSettings() {
   <div class="sect"><h3>Ukuran font Arab</h3>
     <label class="range"><span>A</span><input type="range" data-range="arSize" min="1.5" max="3" step="0.1" value="${st.arSize}"><span style="font-size:1.3rem">A</span></label></div>
   <div class="sect"><h3>Tema</h3>${seg('theme', [['auto', 'Otomatis'], ['light', 'Terang'], ['dark', 'Gelap']], st.theme)}</div>
+  <div class="sect"><h3>Susunan Mushaf</h3>
+    <p class="hint">Mode Mushaf memakai susunan <b>Madinah 15 baris</b> (604 halaman) — garis per baris sama persis dengan cetakan resmi King Fahd Complex. Susunan <b>20 baris</b> (Peshawar/Qadim) belum tersedia: tabel halaman digitalnya belum dipublikasikan sumber resmi mana pun.</p></div>
   <div class="sect"><h3>Lanjut ayat berikutnya otomatis</h3>
     <div class="seg"><button data-set="next" data-val="1" class="${st.next ? 'on' : ''}">Aktif</button>
     <button data-set="next" data-val="0" class="${!st.next ? 'on' : ''}">Nonaktif</button></div></div>

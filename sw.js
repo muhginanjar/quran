@@ -1,12 +1,12 @@
 /* Quran Offline — service worker: precache shell+data, cache-first untuk audio */
 'use strict';
-const SHELL = 'quran-shell-v9';
+const SHELL = 'quran-shell-v10';
 const AUDIO = 'quran-audio';
 const AUDIO_MAX = 400; // simpan ±400 file mp3 terakhir (LRU)
 
 const ASSETS = [
   './', 'index.html', 'styles.css', 'app.js', 'manifest.webmanifest',
-  'data/quran-data.js',
+  'data/quran-data.js', 'data/mushaf-lines.js',
   'fonts/amiri-arabic-400.woff2', 'fonts/amiri-arabic-700.woff2', 'fonts/amiri-quran-arabic.woff2', 'fonts/sakkal-majalla.woff2', 'fonts/reem-kufi-arabic.woff2',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png',
 ];

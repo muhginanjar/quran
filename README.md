@@ -6,7 +6,7 @@ tanpa dependensi runtime.
 
 ## Fitur
 
-- 🕌 **Mode Mushaf** — 604 halaman ala Al-Qur'an cetak: teks Arab mengalir rata kanan-kiri dengan penanda ayat, judul surah bergaris, nomor halaman Arab; **geser/swipe kiri-kanan** (atau tombol ‹ ›, keyboard ←/→, ketik nomor) untuk membalik halaman, posisi halaman **tersimpan otomatis** dan dilanjutkan dari beranda
+- 🕌 **Mode Mushaf** — 604 halaman ala Al-Qur'an cetak Madinah **15 baris/halaman, posisi baris persis sama dengan cetakan resmi KFGQPC**; teks Arab mengalir dengan penanda ayat, judul surah bergaris, nomor halaman Arab; **geser/swipe kiri-kanan** (atau tombol ‹ ›, keyboard ←/→, ketik nomor) untuk membalik halaman, posisi halaman **tersimpan otomatis** dan dilanjutkan dari beranda
 - 📖 Tampilan per-ayat dengan terjemahan **Kemenag RI** & **Tafsir Assaibiq** (bisa pilih / tampilkan keduanya / tanpa terjemahan)
 - 🔡 Pilihan font Arab: **Amiri Quran** (gaya mushaf) atau **Sakkal Majalla** (Naskah klasik) — font dibundel lokal; logo & ikon aplikasi memakai tulisan **القرآن** gaya Kufi (Reem Kufi, OFL)
 - 🔎 Pencarian instan ke seluruh ayat (Arab, Latin, arti) + nama surah, dengan highlight
@@ -38,22 +38,32 @@ app.js                   # logika aplikasi (router hash, audio, cari, tanda)
 styles.css               # tema & tipografi (+ @font-face lokal)
 sw.js                    # service worker: precache shell+data, cache audio
 manifest.webmanifest     # PWA manifest
-data/quran-data.js       # 3.4 MB: teks + 2 terjemahan + metadata 114 surah
+data/quran-data.js       # 3.5 MB: teks + 2 terjemahan + metadata + halaman/juz per ayat
+data/mushaf-lines.js    # 1.4 MB: layout baris mushaf Madinah (604 hal × 15 baris)
 fonts/                   # Amiri, Amiri Quran, Sakkal Majalla (woff2)
 icons/                   # ikon aplikasi
-scripts/build-data.mjs   # pembangkit data/quran-data.js (butuh internet sekali)
+scripts/build-data.mjs          # pembangkit data/quran-data.js (butuh internet sekali)
+scripts/build-mushaf-lines.mjs  # pembangkit data/mushaf-lines.js
 ```
 
 ## Membangun ulang data
 
 ```sh
 node scripts/build-data.mjs
+node scripts/build-mushaf-lines.mjs
 ```
 
 Sumber: [fawazahmed0/quran-api](https://github.com/fawazahmed0/quran-api)
-(teks Uthmani + terjemahan) dan [quran.com API v4](https://quran.com/developer)
-(metadata surah). Hasil diverifikasi otomatis: 6.236 ayat, 114 surah, tidak ada teks kosong.
+(teks Uthmani + terjemahan), [quran.com API v4](https://quran.com/developer)
+(metadata surah + halaman/juz), dan
+[zonetecde/mushaf-layout](https://github.com/zonetecde/mushaf-layout) (ISC — layout baris).
+Hasil diverifikasi otomatis: 6.236 ayat, 114 surah, 604 halaman monoton, tidak ada teks kosong.
 Cache unduhan ada di `scripts/.cache/` (di-gitignore).
+
+> Catatan: susunan **20 baris/halaman** (Peshawar/Qadim) belum tersedia — tabel halaman
+> digitalnya tidak dipublikasikan sumber resmi/terbuka mana pun (Tarteel QUL butuh login,
+> API Quran Foundation butuh key). Yang tersedia publik: 13 baris (849 hal), 15 baris
+> Madinah (604) & IndoPak (610), 16 baris (548).
 
 Audio: [cdn.islamic.network](https://islamic.network) (128 kbps).
 

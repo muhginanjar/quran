@@ -191,6 +191,11 @@ html[data-arfont=sakkal] .ar{line-height:2.15} html[data-arfont=sakkal] .basmala
 .msurah .mbasm{display:block;font-size:.8em;color:var(--fg)}
 .msurah .msname{display:block;font-weight:700;color:var(--accent);font-size:1.05em}
 .mfoot{position:absolute;bottom:9px;left:0;right:0;text-align:center;font-family:'Amiri',serif;color:var(--muted);font-size:1.05rem}
+.mlines{direction:rtl}
+.mline{font-family:var(--font-ar);font-size:calc(var(--ar)*.74);line-height:2.15;text-align:justify;direction:rtl;color:var(--fg);padding:1.5px 2px}
+.mline.c{text-align:center}
+.mline.h{text-align:center;color:var(--accent);font-weight:700;border:1.4px solid var(--gold);border-radius:10px;background:var(--surface2);margin:6px auto 4px;padding:2px 18px;width:max-content;max-width:100%}
+.mline.b{text-align:center;color:var(--fg);margin:3px 0}
 .turn-l{animation:turnL .28s ease}
 .turn-r{animation:turnR .28s ease}
 @keyframes turnL{from{transform:translateX(-26px) scale(.985);opacity:.35}}
