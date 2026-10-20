@@ -10,7 +10,7 @@ const store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* mode privat */ } },
 };
-const DEF = { trans: 'k', reciter: 'ar.alafasy', theme: 'auto', arSize: 2.05, next: true, arFont: 'amiri' };
+const DEF = { trans: 'k', reciter: 'ar.alafasy', theme: 'auto', arSize: 2.05, next: true };
 const st = Object.assign({}, DEF, store.get('st', {}));
 let marks = store.get('marks', []);   // [{s,n}]
 let last = store.get('last', null);   // {s,n}
@@ -18,7 +18,6 @@ let last = store.get('last', null);   // {s,n}
 /* ---------- helper ---------- */
 const RECITERS = { 'ar.alafasy': 'Mishary Alafasy', 'ar.husary': 'M. Khalil Al-Husary', 'ar.mahermuaiqly': 'Maher Al Muaiqly' };
 const TRANSL = { n: 'Tanpa terjemahan', k: 'Kemenag RI', s: 'Tafsir Assaibiq', b: 'Keduanya' };
-const FONTS = { amiri: 'Amiri Quran', sakkal: 'Sakkal Majalla' };
 const $surah = n => Q.s[n - 1];
 const $g = (n, v) => $surah(n).f + v - 1;                    // global nomor ayat
 const $ref = g => {                                          // global → {s,v}
@@ -63,7 +62,6 @@ const mqDark = matchMedia('(prefers-color-scheme: dark)');
 const isDark = () => st.theme === 'dark' || (st.theme === 'auto' && mqDark.matches);
 function applyTheme() { document.documentElement.dataset.theme = isDark() ? 'd' : 'l'; }
 function applyArSize() { document.documentElement.style.setProperty('--ar', st.arSize + 'rem'); }
-function applyArFont() { document.documentElement.dataset.arfont = st.arFont === 'sakkal' ? 'sakkal' : 'amiri'; }
 mqDark.addEventListener('change', () => st.theme === 'auto' && applyTheme());
 
 /* ---------- ikon ---------- */
@@ -218,13 +216,23 @@ function reflowPage(lines) {                         // tata ulang teks jadi tep
     const W = toks.reduce((a, o) => a + (o.w ? o.w.length : 2) + 1, 0);
     const target = W / k;
     let line = [], wsum = 0, made = 0;
+    const mlines = [];
     for (let i = 0; i < toks.length; i++) {
       const o = toks[i];
       line.push(o); wsum += (o.w ? o.w.length : 2) + 1;
       const remain = k - made - 1, left = toks.length - i - 1;
-      if (wsum >= target && remain > 0 && left > 0) { out.push({ l: line }); line = []; wsum = 0; made++; }
+      if (wsum >= target && remain > 0 && left > 0) { mlines.push(line); line = []; wsum = 0; made++; }
     }
-    if (line.length) out.push({ l: line });
+    if (line.length) mlines.push(line);
+    while (mlines.length < k) {                        // kurang baris: belah baris terpanjang (kecuali baris penutup)
+      let bi = 0, bw = 0;
+      for (let i = 0; i < mlines.length - 1; i++) if (mlines[i].length > bw) { bw = mlines[i].length; bi = i; }
+      const L = mlines[bi];
+      if (!L || L.length < 2) break;
+      const half = L.length >> 1;
+      mlines.splice(bi, 1, L.slice(0, half), L.slice(half));
+    }
+    mlines.forEach(L => out.push({ l: L }));
   }
   return out;
 }
@@ -236,8 +244,58 @@ function renderLine(it) {
     if (o.m) { if (ws.length) ws[ws.length - 1].m = (ws[ws.length - 1].m || '') + o.m; else ws.push({ m: o.m }); }
     else ws.push({ w: o.w });
   }
-  const inner = ws.map(x => `<span class="mw">${x.w ? esc(x.w) : ''}${x.m ? `<span class="mnum">${x.m}</span>` : ''}</span>`).join('');
+  const inner = ws.map(x => `<span class="mw" data-w="${esc(x.w || '')}">${x.w ? esc(x.w) : ''}${x.m ? `<span class="mnum">${x.m}</span>` : ''}</span>`).join(' ');
   return `<div class="mline${it.c ? ' c' : ''}">${inner}</div>`;
+}
+const NOJOIN_RE = /[اأإآٱدرزوؤةىء]/;
+function stretchWord(s, nth) {                      // tatweel di posisi sambung; boleh ditumpuk (stroke makin panjang)
+  const re = /[^\u0640اأإآٱدرزوؤةىء\u064B-\u065F\u0670\u06D6-\u06ED][\u064B-\u065F\u0670\u06D6-\u06ED]*/gu;
+  const pos = [];
+  let m;
+  while ((m = re.exec(s))) {
+    const end = m.index + m[0].length;
+    if (end >= s.length) break;
+    if (NOJOIN_RE.test(s[end])) continue;
+    pos.push(end);
+  }
+  if (!pos.length) return null;
+  const end = pos[nth % pos.length];
+  return s.slice(0, end) + '\u0640' + s.slice(end);
+}
+function justifyMushaf() {                           // penuhi baris dgn kashida, sisa → word-spacing
+  const box = document.querySelector('.mlines'); if (!box) return;
+  const avail = box.clientWidth - 6;
+  const all = [...box.children], isBand = el => el.classList.contains('h') || el.classList.contains('b');
+  for (let ai = 0; ai < all.length; ai++) {
+    const line = all[ai];
+    if (!line.classList || !line.classList.contains('mline') || isBand(line)) continue;
+    line.style.wordSpacing = '';
+    const spans = [...line.querySelectorAll('.mw')];
+    for (const s of spans) {                       // reset ke teks asli (idempoten saat font berganti)
+      s._k = 0;
+      const mk = s.querySelector('.mnum');
+      s.innerHTML = esc(s.dataset.w || '') + (mk ? mk.outerHTML : '');
+    }
+    if (ai === all.length - 1 || isBand(all[ai + 1])) continue;   // baris akhir paragraf: natural seperti cetak
+    const natW = () => { const r = document.createRange(); r.selectNodeContents(line); return r.getBoundingClientRect().width; };
+    let guard = 0;
+    while (guard++ < 400 && natW() < avail - 1) {
+      let grew = false;
+      for (const s of spans) {
+        if (s._k >= 26) continue;
+        const mk = s.querySelector('.mnum');
+        const cand = stretchWord(s.dataset.w || '', s._k);
+        s._k++;
+        if (cand === null) continue;
+        s.innerHTML = esc(cand) + (mk ? mk.outerHTML : '');
+        grew = true;
+        if (natW() >= avail - 1) break;
+      }
+      if (!grew) break;
+    }
+    const def = avail - natW();
+    if (def > 3 && spans.length > 1) line.style.wordSpacing = Math.min(48, def / (spans.length - 1)) + 'px';
+  }
 }
 function tplMushaf(p) {
   p = Math.min(Math.max(1, p | 0), 604);
@@ -266,6 +324,7 @@ function initMushaf(p) {
   $('#m-prev').onclick = () => goPage(p - 1, -1);
   $('#m-next').onclick = () => goPage(p + 1, 1);
   $('#m-jump').addEventListener('change', e => { const v = +e.target.value; if (v >= 1 && v <= 604) goPage(v); });
+  requestAnimationFrame(() => document.fonts.ready.then(justifyMushaf));
   const el = $('#mpage');
   let x0 = null, y0 = null;
   el.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
@@ -289,6 +348,8 @@ addEventListener('keydown', e => {
   if (e.key === 'ArrowLeft') goPage(curPage + 1, 1);
   else if (e.key === 'ArrowRight') goPage(curPage - 1, -1);
 });
+let rzT;
+addEventListener('resize', () => { clearTimeout(rzT); rzT = setTimeout(() => location.hash.startsWith('#/m/') && justifyMushaf(), 250); });
 
 
 /* simpan posisi baca terakhir (debounce) */
@@ -406,8 +467,6 @@ function tplSettings() {
   <div class="sect"><h3>Terjemahan</h3>${seg('trans', Object.entries(TRANSL), st.trans)}</div>
   <div class="sect"><h3>Pembaca audio (qari)</h3>${seg('reciter', Object.entries(RECITERS), st.reciter)}
     <p class="hint">Audio diunduh saat pertama diputar, lalu otomatis tersimpan untuk didengar offline.</p></div>
-  <div class="sect"><h3>Font Arab</h3>${seg('arFont', Object.entries(FONTS), st.arFont)}
-    <p class="hint">Amiri Quran: gaya mushaf · Sakkal Majalla: Naskah klasik.</p></div>
   <div class="sect"><h3>Ukuran font Arab</h3>
     <label class="range"><span>A</span><input type="range" data-range="arSize" min="1.5" max="3" step="0.1" value="${st.arSize}"><span style="font-size:1.3rem">A</span></label></div>
   <div class="sect"><h3>Tema</h3>${seg('theme', [['auto', 'Otomatis'], ['light', 'Terang'], ['dark', 'Gelap']], st.theme)}</div>
@@ -533,7 +592,7 @@ document.addEventListener('click', e => {
 });
 
 document.addEventListener('input', e => {
-  if (e.target.dataset.range === 'arSize') { st.arSize = +e.target.value; store.set('st', st); applyArSize(); }
+  if (e.target.dataset.range === 'arSize') { st.arSize = +e.target.value; store.set('st', st); applyArSize(); if (location.hash.startsWith('#/m/')) requestAnimationFrame(justifyMushaf); }
 });
 
 function handleSetting(btn) {
@@ -542,7 +601,8 @@ function handleSetting(btn) {
   if (name === 'arSize') st.arSize = +val;
   else if (name === 'next') st.next = val === '1';
   else st[name] = val;
-  store.set('st', st); applyTheme(); applyArSize(); applyArFont();
+  store.set('st', st); applyTheme(); applyArSize();
+  if (location.hash.startsWith('#/m/') && name === 'theme') requestAnimationFrame(() => document.fonts.ready.then(justifyMushaf));
   if (name === 'reciter') stopAudio();
   const h = location.hash.replace(/^#\//, '').split('/');
   if (h[0] === 't' && name !== 'arSize') render({ v: 'settings' });
@@ -571,4 +631,4 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
 }
 
 /* ================= BOOT ================= */
-applyTheme(); applyArSize(); applyArFont(); paintBadge(); route();
+applyTheme(); applyArSize(); paintBadge(); route();

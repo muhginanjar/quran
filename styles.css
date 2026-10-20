@@ -1,18 +1,13 @@
 /* ============ Quran Offline — styles ============ */
 @font-face{font-family:'Amiri';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/amiri-arabic-400.woff2) format('woff2');}
-@font-face{font-family:'Amiri';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/amiri-arabic-700.woff2) format('woff2');}
-@font-face{font-family:'Sakkal Majalla';font-style:normal;font-weight:400;font-display:swap;
-  src:local('Sakkal Majalla'),local('Sakkal Majalla Regular'),url(fonts/sakkal-majalla.woff2) format('woff2');}
-@font-face{font-family:'Sakkal Majalla';font-style:normal;font-weight:700;font-display:swap;
-  src:local('Sakkal Majalla Bold'),url(fonts/sakkal-majalla.woff2) format('woff2');}
 @font-face{font-family:'Reem Kufi';font-style:normal;font-weight:400 700;font-display:swap;src:url(fonts/reem-kufi-arabic.woff2) format('woff2');}
-@font-face{font-family:'Amiri Quran';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/amiri-quran-arabic.woff2) format('woff2');}
+@font-face{font-family:'KFGQPC Uthmanic Hafs';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/kfgqpc-hafs.woff2) format('woff2');}
 
 :root{
   --bg:#f4efe3; --surface:#fffdf6; --surface2:#f7f2e6; --fg:#1b2621; --muted:#5d6b62;
   --accent:#0e5b41; --accent-ink:#fff; --accent-soft:#dfe9e2; --gold:#a67c2e; --border:#e0d7c2;
   --shadow:0 1px 2px rgba(30,25,10,.06),0 6px 18px rgba(30,25,10,.07);
-  --ar:2.05rem; --font-ar:'Amiri Quran','Amiri',serif; --paper:#fbf6e7;
+  --ar:2.05rem; --font-ar:'KFGQPC Uthmanic Hafs','Amiri',serif; --paper:#fbf6e7;
   color-scheme:light;
 }
 html[data-theme=d]{
@@ -135,8 +130,6 @@ html[data-theme=d] .btn.alt{color:var(--fg)}
 label.range{display:flex;align-items:center;gap:12px;font-size:.9rem}
 label.range input{flex:1;accent-color:var(--accent)}
 .kv{display:flex;justify-content:space-between;font-size:.87rem;padding:5px 0}
-html[data-arfont=sakkal]{--font-ar:'Sakkal Majalla','Amiri Quran',serif}
-html[data-arfont=sakkal] .ar{line-height:2.15} html[data-arfont=sakkal] .basmala{font-size:1.95rem}
 
 /* ---------- bottom nav ---------- */
 .bottomnav{position:fixed;bottom:0;left:0;right:0;z-index:40;display:flex;justify-content:space-around;
@@ -185,7 +178,7 @@ html[data-arfont=sakkal] .ar{line-height:2.15} html[data-arfont=sakkal] .basmala
   box-shadow:var(--shadow);border-radius:8px;padding:26px 22px 42px;min-height:64vh;overflow:hidden;touch-action:pan-y;user-select:none}
 .mtext{font-family:var(--font-ar);font-size:calc(var(--ar)*.8);line-height:2.3;text-align:justify;direction:rtl;color:var(--fg);word-spacing:.05em}
 .mnum{display:inline-grid;place-items:center;min-width:1.55em;height:1.55em;padding:0 .1em;font-family:'Amiri',serif;
-  font-size:.58em;color:var(--gold);border:1.3px solid var(--gold);border-radius:50%;margin:0 .18em .35em;vertical-align:.18em;
+  font-size:.58em;color:var(--gold);border:1.3px solid var(--gold);border-radius:50%;margin:0 .55em .35em;vertical-align:.18em;
   box-shadow:0 0 0 2px var(--paper),0 0 0 3.4px color-mix(in srgb,var(--gold) 75%,transparent)}
 .msurah{display:inline-block;vertical-align:middle;margin:0 .35em;padding:2px 14px;border:1.4px solid var(--gold);border-radius:10px;
   background:var(--surface2);text-align:center;line-height:1.5}
@@ -194,7 +187,7 @@ html[data-arfont=sakkal] .ar{line-height:2.15} html[data-arfont=sakkal] .basmala
 .mfoot{position:absolute;bottom:9px;left:0;right:0;text-align:center;font-family:'Amiri',serif;color:var(--muted);font-size:1.05rem}
 .mlines{direction:rtl}
 .mline{font-family:var(--font-ar);font-size:calc(var(--ar)*.74);line-height:2.1;direction:rtl;color:var(--fg);
-  display:flex;justify-content:space-between;align-items:baseline;padding:2px 2px;min-height:1.4em}
+  display:block;white-space:nowrap;overflow:hidden;padding:2px 2px;min-height:1.4em}
 .mline.c{justify-content:center;gap:.28em}.mw{display:inline-block;white-space:nowrap}
 .mline.h{text-align:center;color:var(--accent);font-weight:700;border:1.4px solid var(--gold);border-radius:10px;background:var(--surface2);margin:6px auto 4px;padding:2px 18px;width:max-content;max-width:100%}
 .mline.b{text-align:center;color:var(--accent);font-weight:700;border:1.4px solid var(--gold);border-radius:10px;background:var(--surface2);margin:6px auto 4px;padding:2px 18px;width:max-content;max-width:100%}

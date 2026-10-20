@@ -8,7 +8,7 @@ tanpa dependensi runtime.
 
 - 🕌 **Mode Mushaf** — Al-Qur'an cetak digital: **604 halaman** (pembagian ayat mushaf Madinah KFGQPC) ditata **16 baris per halaman rata penuh (justify)**, basmalah menyatu dengan nama surah dalam bingkai judul seperti bab, penanda ayat berhias, nomor halaman Arab; **geser/swipe kiri-kanan** (atau tombol ‹ ›, keyboard ←/→, ketik nomor) untuk membalik halaman, posisi halaman **tersimpan otomatis** dan dilanjutkan dari beranda
 - 📖 Tampilan per-ayat dengan terjemahan **Kemenag RI** & **Tafsir Assaibiq** (bisa pilih / tampilkan keduanya / tanpa terjemahan)
-- 🔡 Pilihan font Arab: **Amiri Quran** (gaya mushaf) atau **Sakkal Majalla** (Naskah klasik) — font dibundel lokal; logo & ikon aplikasi memakai tulisan **القرآن** gaya Kufi (Reem Kufi, OFL)
+- 🔡 Font mushaf resmi **KFGQPC Uthmanic Script HAFS** (King Fahd Complex — sama seperti yang dipakai aplikasi Quran Android) untuk teks Arab; nama surah & angka memakai Amiri; logo & ikon aplikasi tulisan **القرآن** gaya Kufi (Reem Kufi, OFL)
 - 🔎 Pencarian instan ke seluruh ayat (Arab, Latin, arti) + nama surah, dengan highlight
 - ⏯ Audio per-ayat & per-surah (Alafasy, Al-Husary, Maher) — **di-cache otomatis**, setelah diputar sekali bisa offline
 - 🔖 Penanda ayat & posisi baca terakhir — tersimpan di `localStorage`, tetap ada tanpa internet
@@ -40,8 +40,7 @@ sw.js                    # service worker: precache shell+data, cache audio
 manifest.webmanifest     # PWA manifest
 data/quran-data.js       # 3.5 MB: teks + 2 terjemahan + metadata + halaman/juz per ayat
 data/mushaf-lines.js    # 1.4 MB: teks per baris sumber KFGQPC (604 hal; direflow jadi 16 baris/halaman)
-fonts/                   # Amiri, Amiri Quran, Sakkal Majalla (woff2)
-icons/                   # ikon aplikasi
+fonts/                   # KFGQPC Uthmanic Hafs, Amiri, Reem Kufi (woff2)
 scripts/build-data.mjs          # pembangkit data/quran-data.js (butuh internet sekali)
 scripts/build-mushaf-lines.mjs  # pembangkit data/mushaf-lines.js
 ```
