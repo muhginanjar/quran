@@ -177,34 +177,81 @@ function goPage(p, dir) {
   turnDir = dir || (p > curPage ? 1 : -1);
   location.hash = '#/m/' + p;
 }
+function flowAyahs(g0, g1) {                        // fallback bila data baris tak ada
+  let body = '';
+  for (let g = g0; g <= g1; g++) {
+    const { s, v } = $ref(g);
+    if (v === 1) {
+      const b = s !== 1 && s !== 9 ? `<span class="mbasm">بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ</span>` : '';
+      body += `<span class="msurah" title="${esc($surah(s).l)}">${b}<span class="msname">سُورَةُ ${esc($surah(s).a)}</span></span>`;
+    }
+    body += `${esc($text(g)[0])} <span class="mnum">${arNum(v)}</span> `;
+  }
+  return `<div class="mtext" dir="rtl">${body}</div>`;
+}
+function reflowPage(lines) {                         // tata ulang teks jadi tepat 16 baris
+  const blocks = []; let cur = [];
+  const flush = () => { if (cur.length) { blocks.push({ t: cur }); cur = []; } };
+  for (const ln of lines) {
+    if (ln[0] === 1) { flush(); blocks.push({ h: ln[1] }); }
+    else if (ln[0] === 2) { flush(); const prev = blocks[blocks.length - 1]; if (prev && prev.h !== undefined) prev.b = 1; else blocks.push({ b: 1 }); }
+    else for (const tok of ln[1].trim().split(/\s+/))
+      cur.push(/^[٠-٩]{1,4}$/.test(tok) ? { m: tok } : { w: tok });
+  }
+  flush();
+  const paras = blocks.filter(x => x.t);
+  const specials = blocks.length - paras.length;
+  const budget = Math.max(paras.length, 16 - specials);
+  const wt = b => b.t.reduce((a, o) => a + (o.w ? o.w.length : 2) + 1, 0);
+  const total = paras.reduce((a, b) => a + wt(b), 0) || 1;
+  const alloc = paras.map(b => Math.max(1, Math.round(budget * wt(b) / total)));
+  let diff = budget - alloc.reduce((a, b) => a + b, 0);
+  for (let i = 0; diff !== 0 && i < alloc.length * 40; i++) {
+    const j = i % alloc.length;
+    if (diff > 0) { alloc[j]++; diff--; }
+    else if (alloc[j] > 1) { alloc[j]--; diff++; }
+  }
+  const out = []; let pi = 0;
+  for (const blk of blocks) {
+    if (!blk.t) { out.push(blk); continue; }
+    const toks = blk.t, k = alloc[pi++];
+    const W = toks.reduce((a, o) => a + (o.w ? o.w.length : 2) + 1, 0);
+    const target = W / k;
+    let line = [], wsum = 0, made = 0;
+    for (let i = 0; i < toks.length; i++) {
+      const o = toks[i];
+      line.push(o); wsum += (o.w ? o.w.length : 2) + 1;
+      const remain = k - made - 1, left = toks.length - i - 1;
+      if (wsum >= target && remain > 0 && left > 0) { out.push({ l: line }); line = []; wsum = 0; made++; }
+    }
+    if (line.length) out.push({ l: line });
+  }
+  return out;
+}
+function renderLine(it) {
+  if (it.h !== undefined) return `<div class="mline h">${it.b ? `<span class="mbasm2">بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ</span>` : ''}سُورَةُ ${esc($surah(it.h).a)}</div>`;
+  if (it.b) return `<div class="mline b">بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ</div>`;
+  const ws = [];
+  for (const o of it.l) {
+    if (o.m) { if (ws.length) ws[ws.length - 1].m = (ws[ws.length - 1].m || '') + o.m; else ws.push({ m: o.m }); }
+    else ws.push({ w: o.w });
+  }
+  const inner = ws.map(x => `<span class="mw">${x.w ? esc(x.w) : ''}${x.m ? `<span class="mnum">${x.m}</span>` : ''}</span>`).join('');
+  return `<div class="mline${it.c ? ' c' : ''}">${inner}</div>`;
+}
 function tplMushaf(p) {
   p = Math.min(Math.max(1, p | 0), 604);
   const g0 = PAGE_START[p], g1 = PAGE_START[p + 1] - 1;
   const juz = Q.jz[g0 - 1];
+  const su = $surah($ref(g1).s);
   const M = window.MUSHAF604;
-  let body = '';
-  if (M && M.p[p - 1]) {                       // baris persis seperti cetak (Madinah 15 baris)
-    for (const ln of M.p[p - 1]) {
-      if (ln[0] === 1) body += `<div class="mline h">سُورَةُ ${esc($surah(ln[1]).a)}</div>`;
-      else if (ln[0] === 2) body += `<div class="mline b">بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ</div>`;
-      else body += `<div class="mline${ln[2] ? ' c' : ''}">${esc(ln[1]).replace(/[٠-٩]{1,4}/g, m => `<span class="mnum">${m}</span>`)}</div>`;
-    }
-    body = `<div class="mlines">${body}</div>`;
-  } else {                                     // fallback: teks mengalir per ayat
-    for (let g = g0; g <= g1; g++) {
-      const { s, v } = $ref(g);
-      if (v === 1) {
-        const b = s !== 1 && s !== 9 ? `<span class="mbasm">بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ</span>` : '';
-        body += `<span class="msurah" title="${esc($surah(s).l)}">${b}<span class="msname">سُورَةُ ${esc($surah(s).a)}</span></span>`;
-      }
-      body += `${esc($text(g)[0])} <span class="mnum">${arNum(v)}</span> `;
-    }
-    body = `<div class="mtext" dir="rtl">${body}</div>`;
-  }
+  const body = (M && M.p[p - 1])
+    ? `<div class="mlines">${reflowPage(M.p[p - 1]).map(renderLine).join('')}</div>`
+    : flowAyahs(g0, g1);
   return `
   <div class="mbar">
     <button id="m-prev" title="Halaman sebelumnya">‹</button>
-    <div class="mtitle"><b>Mushaf</b><span>Halaman ${p} dari 604 · Juz ${juz} · 15 baris</span></div>
+    <div class="mtitle"><b>${esc(su.l)} <span class="msar">${esc(su.a)}</span></b><span>Halaman ${p} · Juz ${juz}</span></div>
     <input id="m-jump" type="number" min="1" max="604" value="${p}" aria-label="Ke halaman">
     <button id="m-next" title="Halaman berikutnya">›</button>
   </div>
@@ -365,7 +412,7 @@ function tplSettings() {
     <label class="range"><span>A</span><input type="range" data-range="arSize" min="1.5" max="3" step="0.1" value="${st.arSize}"><span style="font-size:1.3rem">A</span></label></div>
   <div class="sect"><h3>Tema</h3>${seg('theme', [['auto', 'Otomatis'], ['light', 'Terang'], ['dark', 'Gelap']], st.theme)}</div>
   <div class="sect"><h3>Susunan Mushaf</h3>
-    <p class="hint">Mode Mushaf memakai susunan <b>Madinah 15 baris</b> (604 halaman) — garis per baris sama persis dengan cetakan resmi King Fahd Complex. Susunan <b>20 baris</b> (Peshawar/Qadim) belum tersedia: tabel halaman digitalnya belum dipublikasikan sumber resmi mana pun.</p></div>
+    <p class="hint">Mode Mushaf menampilkan <b>604 halaman</b> dengan pembagian ayat mushaf Madinah (KFGQPC), ditata <b>16 baris</b> per halaman seperti Al-Qur'an cetak.</p></div>
   <div class="sect"><h3>Lanjut ayat berikutnya otomatis</h3>
     <div class="seg"><button data-set="next" data-val="1" class="${st.next ? 'on' : ''}">Aktif</button>
     <button data-set="next" data-val="0" class="${!st.next ? 'on' : ''}">Nonaktif</button></div></div>
