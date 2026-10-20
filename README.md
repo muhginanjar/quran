@@ -6,8 +6,8 @@ tanpa dependensi runtime.
 
 ## Fitur
 
-- 📖 Teks Uthmani (Quran Uthmani Hafs) + terjemahan **Kemenag RI** & **Tafsir Assaibiq** (bisa pilih / tampilkan keduanya)
-- 🕌 **Mode baca** — teks Arab saja tanpa terjemahan, gaya mushaf; atau per-ayat dengan terjemahan seperti biasa
+- 🕌 **Mode Mushaf** — 604 halaman ala Al-Qur'an cetak: teks Arab mengalir rata kanan-kiri dengan penanda ayat, judul surah bergaris, nomor halaman Arab; **geser/swipe kiri-kanan** (atau tombol ‹ ›, keyboard ←/→, ketik nomor) untuk membalik halaman, posisi halaman **tersimpan otomatis** dan dilanjutkan dari beranda
+- 📖 Tampilan per-ayat dengan terjemahan **Kemenag RI** & **Tafsir Assaibiq** (bisa pilih / tampilkan keduanya / tanpa terjemahan)
 - 🔡 Pilihan font Arab: **Amiri Quran** (gaya mushaf) atau **Sakkal Majalla** (Naskah klasik) — font dibundel lokal; logo & ikon aplikasi memakai tulisan **القرآن** gaya Kufi (Reem Kufi, OFL)
 - 🔎 Pencarian instan ke seluruh ayat (Arab, Latin, arti) + nama surah, dengan highlight
 - ⏯ Audio per-ayat & per-surah (Alafasy, Al-Husary, Maher) — **di-cache otomatis**, setelah diputar sekali bisa offline

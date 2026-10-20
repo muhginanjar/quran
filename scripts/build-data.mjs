@@ -33,6 +33,24 @@ const dK = await getJSON(SRC.k[0], 'k');
 const dS = await getJSON(SRC.s[0], 's');
 const dM = await getJSON(SRC.meta[0], 'meta');
 
+// Peta halaman & juz per ayat — mushaf Madinah 604 hal (quran.com v4)
+let pageMap;
+try { pageMap = JSON.parse(await readFile(resolve(CACHE, 'pages.json'), 'utf8')); }
+catch {
+  pageMap = {};
+  for (let jz = 1; jz <= 30; jz++) {
+    const u = `https://api.quran.com/api/v4/verses/by_juz/${jz}?words=false&per_page=576&fields=page_v1,juz_number`;
+    console.log(`↓ juz ${jz} …`);
+    const res = await fetch(u);
+    if (!res.ok) throw new Error(`juz ${jz}: HTTP ${res.status}`);
+    const d = await res.json();
+    if (!d.verses?.length) throw new Error(`juz ${jz} kosong`);
+    for (const v of d.verses) pageMap[v.verse_key] = [v.page_number, v.juz_number];
+  }
+  await mkdir(CACHE, { recursive: true });
+  await writeFile(resolve(CACHE, 'pages.json'), JSON.stringify(pageMap));
+}
+
 // cek konsistensi
 const N = 6236;
 for (const [name, d] of [['ar', dAr], ['k', dK], ['s', dS]]) {
@@ -49,6 +67,7 @@ for (let i = 0; i < N; i++) idx.set(`${dAr.quran[i].chapter}:${dAr.quran[i].vers
 
 const surahs = [];
 const verses = []; // [ar, kemenag, assaibiq] per ayat, urut global 1..6236
+const pages = [], juzz = [];
 let g = 0;
 for (const c of chapters) {
   const first = g;
@@ -58,6 +77,9 @@ for (const c of chapters) {
     const tA = dAr.quran[i].text, tK = dK.quran[i].text, tS = dS.quran[i].text;
     if (!tA || !tK || !tS) throw new Error(`teks kosong ${c.id}:${v}`);
     verses.push([tA, tK, tS]);
+    const pm = pageMap[`${c.id}:${v}`];
+    if (!pm) throw new Error(`peta halaman hilang ${c.id}:${v}`);
+    pages.push(pm[0]); juzz.push(pm[1]);
     g++;
   }
   surahs.push({
@@ -67,12 +89,18 @@ for (const c of chapters) {
   });
 }
 if (g !== N) throw new Error(' ayat terjembatani: ' + g);
+if (pages[0] !== 1 || pages[N - 1] !== 604) throw new Error('anchor halaman salah');
+if (new Set(pages).size !== 604) throw new Error(`bukan 604 halaman: ${new Set(pages).size}`);
+for (let i = 1; i < N; i++) if (pages[i] < pages[i - 1]) throw new Error('halaman tidak monoton');
+for (let i = 1; i < N; i++) if (juzz[i] < juzz[i - 1] || juzz[i] - juzz[i - 1] > 1) throw new Error('juz tidak monoton');
 
 const payload = {
   b: new Date().toISOString().slice(0, 10),
   src: { ar: SRC.ar[1], k: SRC.k[1], s: SRC.s[1] },
   s: surahs,
   v: verses,
+  pg: pages,
+  jz: juzz,
 };
 
 const out = resolve(ROOT, 'data/quran-data.js');

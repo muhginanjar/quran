@@ -1,6 +1,6 @@
 /* Quran Offline — service worker: precache shell+data, cache-first untuk audio */
 'use strict';
-const SHELL = 'quran-shell-v7';
+const SHELL = 'quran-shell-v9';
 const AUDIO = 'quran-audio';
 const AUDIO_MAX = 400; // simpan ±400 file mp3 terakhir (LRU)
 

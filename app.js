@@ -81,6 +81,7 @@ function route() {
   const seg = location.hash.replace(/^#\//, '').split('/');
   let r = { v: 'home' };
   if (seg[0] === 's' && seg[1]) r = { v: 'surah', n: +seg[1], a: +seg[2] || 0 };
+  else if (seg[0] === 'm') r = { v: 'mushaf', p: +seg[1] || store.get('mpage', 1) };
   else if (seg[0] === 'q') r = { v: 'search', q: seg.slice(1).join('/') ? decodeURIComponent(seg.slice(1).join('/')) : '' };
   else if (seg[0] === 'b') r = { v: 'marks' };
   else if (seg[0] === 't') r = { v: 'settings' };
@@ -93,6 +94,7 @@ function render(r) {
   $$('.bottomnav a').forEach(a => a.classList.toggle('on', a.dataset.nav === r.v));
   if (r.v === 'home') view.innerHTML = tplHome();
   else if (r.v === 'surah') view.innerHTML = tplSurah(r.n, r.a);
+  else if (r.v === 'mushaf') { view.innerHTML = tplMushaf(r.p); initMushaf(r.p); }
   else if (r.v === 'search') { view.innerHTML = tplSearch(r.q); initSearch(r.q); }
   else if (r.v === 'marks') view.innerHTML = tplMarks();
   else { view.innerHTML = tplSettings(); storageInfo().then(t => { const el = $('#st-storage'); if (el) el.textContent = t; }); }
@@ -119,6 +121,9 @@ function tplHome() {
       <span class="sar">${esc(s.a)}</span></a>`).join('');
   return `
   ${cont}
+  <a class="mushaf-cta" href="#/m/${store.get('mpage', 1)}">
+    <svg viewBox="0 0 24 24"><path d="M12 6c-2-1.6-4.6-2-8-2v14c3.4 0 6 .4 8 2 2-1.6 4.6-2 8-2V4c-3.4 0-6 .4-8 2z"/><path d="M12 6v14"/></svg>
+    <span><b>Mode Mushaf</b> — halaman ${store.get('mpage', 1)}<i>geser ↔ seperti Al-Qur'an cetak</i></span></a>
   <form class="search" action="#/q/" id="f-home">
     ${ICON.search}<input name="q" placeholder="Cari ayat / kata kunci…" aria-label="Cari">
   </form>
@@ -153,9 +158,80 @@ function tplSurah(n) {
     <div class="surah-actions">
       <button class="btn" act="play-surah" data-n="${n}">${ICON.play} Putar Surah</button>
       <button class="btn alt" act="copy-surah" data-n="${n}">${ICON.copy} Salin Surah</button>
+      <button class="btn alt" act="to-mushaf" data-p="${Q.pg[s.f - 1]}">Mode Mushaf</button>
     </div>
   </div>${basmala}${arts}`;
 }
+
+/* ================= MUSHAF (mode cetak, 604 halaman) ================= */
+const AR_DIG = '٠١٢٣٤٥٦٧٨٩';
+const arNum = n => String(n).replace(/\d/g, d => AR_DIG[d]);
+const PAGE_START = new Array(606);            // PAGE_START[p] = ayat global pertama di hal. p
+for (let g = 1; g <= Q.v.length; g++) { const p = Q.pg[g - 1]; if (!PAGE_START[p]) PAGE_START[p] = g; }
+for (let p = 604; p >= 1; p--) if (!PAGE_START[p]) PAGE_START[p] = PAGE_START[p + 1];
+PAGE_START[605] = Q.v.length + 1;
+let curPage = 0, turnDir = 0;
+function goPage(p, dir) {
+  p = Math.min(Math.max(1, p | 0), 604);
+  if (p === curPage) return;
+  turnDir = dir || (p > curPage ? 1 : -1);
+  location.hash = '#/m/' + p;
+}
+function tplMushaf(p) {
+  p = Math.min(Math.max(1, p | 0), 604);
+  const g0 = PAGE_START[p], g1 = PAGE_START[p + 1] - 1;
+  const juz = Q.jz[g0 - 1];
+  let body = '';
+  for (let g = g0; g <= g1; g++) {
+    const { s, v } = $ref(g);
+    if (v === 1) {
+      const b = s !== 1 && s !== 9 ? `<span class="mbasm">بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ</span>` : '';
+      body += `<span class="msurah" title="${esc($surah(s).l)}">${b}<span class="msname">سُورَةُ ${esc($surah(s).a)}</span></span>`;
+    }
+    body += `${esc($text(g)[0])} <span class="mnum">${arNum(v)}</span> `;
+  }
+  return `
+  <div class="mbar">
+    <button id="m-prev" title="Halaman sebelumnya">‹</button>
+    <div class="mtitle"><b>Mushaf</b><span>Halaman ${p} dari 604 · Juz ${juz}</span></div>
+    <input id="m-jump" type="number" min="1" max="604" value="${p}" aria-label="Ke halaman">
+    <button id="m-next" title="Halaman berikutnya">›</button>
+  </div>
+  <div class="mpage ${turnDir > 0 ? 'turn-l' : 'turn-r'}" id="mpage">
+    <div class="mtext" dir="rtl">${body}</div>
+    <div class="mfoot">${arNum(p)}</div>
+  </div>
+  <p class="sub" style="text-align:center;margin-top:10px">Geser ke kiri / kanan untuk membalik halaman</p>`;
+}
+function initMushaf(p) {
+  curPage = p; store.set('mpage', p);
+  $('#m-prev').onclick = () => goPage(p - 1, -1);
+  $('#m-next').onclick = () => goPage(p + 1, 1);
+  $('#m-jump').addEventListener('change', e => { const v = +e.target.value; if (v >= 1 && v <= 604) goPage(v); });
+  const el = $('#mpage');
+  let x0 = null, y0 = null;
+  el.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+  el.addEventListener('touchend', e => {
+    if (x0 === null) return;
+    const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
+    if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.4) goPage(p + (dx < 0 ? 1 : -1), dx < 0 ? 1 : -1);
+    x0 = null;
+  }, { passive: true });
+  let mx = null;
+  el.addEventListener('mousedown', e => { mx = e.clientX; });
+  el.addEventListener('mouseup', e => {
+    if (mx === null) return;
+    const dx = e.clientX - mx;
+    if (Math.abs(dx) > 80) goPage(p + (dx < 0 ? 1 : -1), dx < 0 ? 1 : -1);
+    mx = null;
+  });
+}
+addEventListener('keydown', e => {
+  if (!location.hash.startsWith('#/m/')) return;
+  if (e.key === 'ArrowLeft') goPage(curPage + 1, 1);
+  else if (e.key === 'ArrowRight') goPage(curPage - 1, -1);
+});
+
 
 /* simpan posisi baca terakhir (debounce) */
 let scrollT;
@@ -369,6 +445,7 @@ document.addEventListener('click', e => {
   if (btn.hasAttribute('data-set')) return handleSetting(btn);
   const act = btn.getAttribute('act');
   if (act === 'play' && btn.dataset.g) playVerse(+btn.dataset.g);
+  else if (act === 'to-mushaf') location.hash = '#/m/' + btn.dataset.p;
   else if (act === 'play-surah') playSurah(+btn.dataset.n);
   else if (act === 'copy' && btn.dataset.g) {
     const g = +btn.dataset.g, { s, v } = $ref(g), t = $text(g);
