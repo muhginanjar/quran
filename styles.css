@@ -5,6 +5,7 @@
   src:local('Sakkal Majalla'),local('Sakkal Majalla Regular'),url(fonts/sakkal-majalla.woff2) format('woff2');}
 @font-face{font-family:'Sakkal Majalla';font-style:normal;font-weight:700;font-display:swap;
   src:local('Sakkal Majalla Bold'),url(fonts/sakkal-majalla.woff2) format('woff2');}
+@font-face{font-family:'Reem Kufi';font-style:normal;font-weight:400 700;font-display:swap;src:url(fonts/reem-kufi-arabic.woff2) format('woff2');}
 @font-face{font-family:'Amiri Quran';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/amiri-quran-arabic.woff2) format('woff2');}
 
 :root{
@@ -40,7 +41,7 @@ svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke
   padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border);
 }
 .brand{display:flex;align-items:center;gap:9px;font-weight:700;letter-spacing:.2px}
-.brand .star{width:26px;height:26px;fill:var(--gold);stroke:none;color:var(--gold)}
+.brand-ar{font-family:'Reem Kufi',serif;font-size:1.65rem;line-height:1;color:var(--gold);transform:translateY(2px)}
 .top-actions{display:flex;gap:2px}
 .ghost{border-radius:10px}
 .ghost:hover{background:var(--surface2)}

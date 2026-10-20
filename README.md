@@ -7,7 +7,8 @@ tanpa dependensi runtime.
 ## Fitur
 
 - 📖 Teks Uthmani (Quran Uthmani Hafs) + terjemahan **Kemenag RI** & **Tafsir Assaibiq** (bisa pilih / tampilkan keduanya)
-- 🔡 Pilihan font Arab: **Amiri Quran** (gaya mushaf) atau **Sakkal Majalla** (Naskah klasik) — font dibundel lokal
+- 🕌 **Mode baca** — teks Arab saja tanpa terjemahan, gaya mushaf; atau per-ayat dengan terjemahan seperti biasa
+- 🔡 Pilihan font Arab: **Amiri Quran** (gaya mushaf) atau **Sakkal Majalla** (Naskah klasik) — font dibundel lokal; logo & ikon aplikasi memakai tulisan **القرآن** gaya Kufi (Reem Kufi, OFL)
 - 🔎 Pencarian instan ke seluruh ayat (Arab, Latin, arti) + nama surah, dengan highlight
 - ⏯ Audio per-ayat & per-surah (Alafasy, Al-Husary, Maher) — **di-cache otomatis**, setelah diputar sekali bisa offline
 - 🔖 Penanda ayat & posisi baca terakhir — tersimpan di `localStorage`, tetap ada tanpa internet

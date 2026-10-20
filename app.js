@@ -17,7 +17,7 @@ let last = store.get('last', null);   // {s,n}
 
 /* ---------- helper ---------- */
 const RECITERS = { 'ar.alafasy': 'Mishary Alafasy', 'ar.husary': 'M. Khalil Al-Husary', 'ar.mahermuaiqly': 'Maher Al Muaiqly' };
-const TRANSL = { k: 'Kemenag RI', s: 'Tafsir Assaibiq', b: 'Keduanya' };
+const TRANSL = { n: 'Tanpa terjemahan', k: 'Kemenag RI', s: 'Tafsir Assaibiq', b: 'Keduanya' };
 const FONTS = { amiri: 'Amiri Quran', sakkal: 'Sakkal Majalla' };
 const $surah = n => Q.s[n - 1];
 const $g = (n, v) => $surah(n).f + v - 1;                    // global nomor ayat
@@ -31,6 +31,7 @@ const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
 const $text = g => Q.v[g - 1];                               // [ar, kemenag, assaibiq]
 const trOf = (g, i = st.trans === 's' ? 2 : 1) => $text(g)[i];
 function translations(g) {
+  if (st.trans === 'n') return '';
   const [, k, s] = $text(g);
   if (st.trans === 'b') return `<div class="tr">${esc(k)}</div><div class="tr alt">${esc(s)}</div>`;
   return `<div class="tr">${esc(st.trans === 's' ? s : k)}</div>`;
@@ -371,13 +372,13 @@ document.addEventListener('click', e => {
   else if (act === 'play-surah') playSurah(+btn.dataset.n);
   else if (act === 'copy' && btn.dataset.g) {
     const g = +btn.dataset.g, { s, v } = $ref(g), t = $text(g);
-    copyText(`${t[0]}\n\n${st.trans === 's' ? t[2] : t[1]}\n— QS. ${$surah(s).l} [${s}]: ${v}`);
+    copyText(st.trans === 'n' ? `${t[0]}\n— QS. ${$surah(s).l} [${s}]: ${v}` : `${t[0]}\n\n${st.trans === 's' ? t[2] : t[1]}\n— QS. ${$surah(s).l} [${s}]: ${v}`);
     toast('Ayat disalin');
   }
   else if (act === 'copy-surah') {
     const n = +btn.dataset.n, s = $surah(n);
     let txt = `${s.n}. ${s.l} — ${s.m}\n\n`;
-    for (let v = 1; v <= s.c; v++) { const t = $text($g(n, v)); txt += `﴿${v}﴾ ${t[0]}\n${st.trans === 's' ? t[2] : t[1]}\n\n`; }
+    for (let v = 1; v <= s.c; v++) { const t = $text($g(n, v)); txt += `﴿${v}﴾ ${t[0]}${st.trans === 'n' ? '' : `\n${st.trans === 's' ? t[2] : t[1]}`}\n\n`; }
     copyText(txt); toast('Surah disalin');
   }
   else if (act === 'mark') {
